@@ -119,18 +119,21 @@ defmodule AshAuthentication.Strategy.Password.SignInPreparation do
   end
 
   defp generate_token(purpose, record, strategy)
-       when is_integer(strategy.sign_in_token_lifetime) and purpose == :sign_in do
-    {:ok, token, _claims} =
-      Jwt.token_for_user(record, %{"purpose" => to_string(purpose)},
+    when is_integer(strategy.sign_in_token_lifetime) and purpose == :sign_in do
+      case Jwt.token_for_user(record, %{"purpose" => to_string(purpose)},
         token_lifetime: strategy.sign_in_token_lifetime
-      )
-
-    Ash.Resource.put_metadata(record, :token, token)
-  end
+      ) do
+        {:ok, token, _claims} -> Ash.Resource.put_metadata(record, :token, token)
+        {:error} -> IO.inspect(:error)
+        _ -> IO.puts("ERROR")
+      end
+    end
 
   defp generate_token(purpose, record, _strategy) do
-    {:ok, token, _claims} = Jwt.token_for_user(record, %{"purpose" => to_string(purpose)})
-
-    Ash.Resource.put_metadata(record, :token, token)
+    case Jwt.token_for_user(record, %{"purpose" => to_string(purpose)}) do
+      {:ok, token, _claims} -> Ash.Resource.put_metadata(record, :token, token)
+      {:error} -> IO.inspect(:error)
+        _ -> IO.puts("ERROR")
+    end
   end
 end
